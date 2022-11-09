@@ -1,7 +1,22 @@
 const router = require('express').Router();
+const restricted = require('../middleware/restricted')
+const checkUsername = require('../middleware/checkUsername')
+const User = require('../users/users-model')
+const bcrypt = require('bcrypt')
 
-router.post('/register', (req, res) => {
-  res.end('implement register, please!');
+router.post('/register', checkUsername, (req, res, next) => {
+  if (!req.body.username || !req.body.password) {
+    res.status(400).json({message: "username and password required"}
+    )
+  } else {
+    const hash = bcrypt.hashSync(req.body.password, 8)
+    req.body.password = hash
+    User.insert(req.body).then(user => {
+      res.status(200).json(user)
+    }).catch(err => {
+      next(err)
+    })
+  }
   /*
     IMPLEMENT
     You are welcome to build additional middlewares to help with the endpoint's functionality.
@@ -29,8 +44,11 @@ router.post('/register', (req, res) => {
   */
 });
 
-router.post('/login', (req, res) => {
-  res.end('implement login, please!');
+router.post('/login',restricted, (req, res) => {
+
+
+
+  
   /*
     IMPLEMENT
     You are welcome to build additional middlewares to help with the endpoint's functionality.
@@ -55,5 +73,13 @@ router.post('/login', (req, res) => {
       the response body should include a string exactly as follows: "invalid credentials".
   */
 });
+
+router.use((err, req, res, next) => { // eslint-disable-line
+  res.status(500).json({
+      message: err.message,
+      customMessage: "Something went wrong in the auth router",
+      stack: err.stack
+  })
+})
 
 module.exports = router;

@@ -1,10 +1,11 @@
 const router = require('express').Router();
 const restricted = require('../middleware/restricted')
-const checkUsername = require('../middleware/checkUsername')
+const checkUsernameExists = require('../middleware/checkUsernameExists')
+const checkUsernameValid = require('../middleware/checkUsernameValid')
 const User = require('../users/users-model')
-const bcrypt = require('bcrypt')
+const bcrypt = require('bcryptjs')
 
-router.post('/register', checkUsername, (req, res, next) => {
+router.post('/register', checkUsernameExists, (req, res, next) => {
   if (!req.body.username || !req.body.password) {
     res.status(400).json({message: "username and password required"}
     )
@@ -44,9 +45,19 @@ router.post('/register', checkUsername, (req, res, next) => {
   */
 });
 
-router.post('/login',restricted, (req, res) => {
-
-
+router.post('/login',checkUsernameValid , (req, res) => {
+  if (!req.body.username || !req.body.password) {
+    res.status(400).json({message: "username and password required"}
+    )
+  } else {
+    const {password} = req.body
+    if (bcrypt.compareSync(password, req.user.password)) {
+      req.session.user = req.user
+      res.json(`welcome ${req.user.username}`)
+    } else {
+      res.status(401).json({message:'invalid credentials'})
+    }
+  }
 
   
   /*

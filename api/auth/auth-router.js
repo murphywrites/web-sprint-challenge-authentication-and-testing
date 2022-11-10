@@ -4,6 +4,8 @@ const checkUsernameExists = require('../middleware/checkUsernameExists')
 const checkUsernameValid = require('../middleware/checkUsernameValid')
 const User = require('../users/users-model')
 const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken')
+const { JWT_SECRET } = require('../secrets')
 
 router.post('/register', checkUsernameExists, (req, res, next) => {
   if (!req.body.username || !req.body.password) {
@@ -52,13 +54,24 @@ router.post('/login',checkUsernameValid , (req, res) => {
   } else {
     const {password} = req.body
     if (bcrypt.compareSync(password, req.user.password)) {
-      req.session.user = req.user
-      res.json(`welcome ${req.user.username}`)
+      const token = buildToken(req.user)
+      // req.session.user = req.user
+      res.json({message:`welcome ${req.user.username}`,
+                token})
     } else {
       res.status(401).json({message:'invalid credentials'})
     }
   }
 
+  function buildToken(user) {
+    const payload = {
+      subject: user.id,
+      username: user.username
+    }
+    const options = {expiresIn: "1d"}
+    
+    return jwt.sign(payload, JWT_SECRET, options)
+  }
   
   /*
     IMPLEMENT

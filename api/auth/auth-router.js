@@ -1,5 +1,4 @@
 const router = require('express').Router();
-const restricted = require('../middleware/restricted')
 const checkUsernameExists = require('../middleware/checkUsernameExists')
 const checkUsernameValid = require('../middleware/checkUsernameValid')
 const User = require('../users/users-model')
